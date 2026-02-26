@@ -1,0 +1,14 @@
+CuantumWiki — TinyML Tone Model Training Report
+==================================================
+
+Labels:           neutral, positivo, urgente, molesto, formal
+Vocab size:       3500
+Max tokens:       64
+Embedding dim:    32
+Hidden dim:       64
+Model size:       117.1 KB (INT8)
+
+Train accuracy:      0.9981
+Validation accuracy: 1.0000
+Train loss:          0.0104
+Validation loss:     0.0001

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CuantumWiki — Wiki técnica para detección de tono con arquitectura distribuida: Web, ESP32-S3 coordinador y 4x ESP32-C3 workers TinyML.">
+  <title>CuantumWiki — Arquitectura Distribuida de Detección de Tono</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛</text></svg>">
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <button class="menu-toggle" aria-label="Menu">☰</button>
+    <a href="#inicio" class="header-logo">
+      <div class="logo-icon">⚛</div>
+      <h1>CuantumWiki</h1>
+    </a>
+    <span class="header-subtitle">Wiki Técnica — Detección de Tono Distribuida</span>
+    <div class="header-right">
+      <span class="header-badge"><span class="dot"></span> v3.0</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">General</div>
+      <a href="#inicio" class="nav-link active">
+        <span class="nav-icon">🏠</span> Inicio
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Documentación</div>
+      <a href="#arquitectura" class="nav-link">
+        <span class="nav-icon">🏗️</span> Arquitectura
+        <span class="nav-num">01</span>
+      </a>
+      <a href="#protocolo" class="nav-link">
+        <span class="nav-icon">🔌</span> Protocolo Serial
+        <span class="nav-num">02</span>
+      </a>
+      <a href="#modelo" class="nav-link">
+        <span class="nav-icon">🧠</span> Estrategia de Modelo
+        <span class="nav-num">03</span>
+      </a>
+      <a href="#firmware" class="nav-link">
+        <span class="nav-icon">⚙️</span> Plan de Firmware
+        <span class="nav-num">04</span>
+      </a>
+      <a href="#web-tokenizer" class="nav-link">
+        <span class="nav-icon">🌐</span> Web + Tokenización
+        <span class="nav-num">05</span>
+      </a>
+      <a href="#orquestacion" class="nav-link">
+        <span class="nav-icon">🔄</span> Orquestación
+        <span class="nav-num">06</span>
+      </a>
+      <a href="#roadmap" class="nav-link">
+        <span class="nav-icon">🗺️</span> Roadmap
+        <span class="nav-num">07</span>
+      </a>
+      <a href="#github" class="nav-link">
+        <span class="nav-icon">📦</span> GitHub Collab
+        <span class="nav-num">08</span>
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Referentes</div>
+      <a href="#ref-master" class="nav-link">
+        <span class="nav-icon">🔷</span> masterV3 (S3)
+      </a>
+      <a href="#ref-quantum" class="nav-link">
+        <span class="nav-icon">🔶</span> quantumV3 (C3)
+      </a>
+      <a href="#ref-comparativa" class="nav-link">
+        <span class="nav-icon">📊</span> Comparativa
+      </a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="main">
+
+    <!-- ─── INICIO ─── -->
+    <section id="inicio" class="section">
+      <div class="hero">
+        <h1>CuantumWiki</h1>
+        <p class="hero-description">
+          Wiki técnico para el proyecto de detección de tono con arquitectura distribuida.
+          Tokenización en PC, coordinación por ESP32-S3, clasificación TinyML en nodos ESP32-C3.
+        </p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-value">3</span>
+            <span class="stat-label">Capas</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">4</span>
+            <span class="stat-label">Workers C3</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">5</span>
+            <span class="stat-label">Clases de Tono</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">&lt;80ms</span>
+            <span class="stat-label">Latencia Objetivo</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-diagram">
+        <div class="flow-node">
+          <div class="node-label">🌐 Web App</div>
+          <div class="node-sub">Tokenización + UI</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">📡 Serial</div>
+          <div class="node-sub">JSONL</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">🔷 ESP32-S3</div>
+          <div class="node-sub">Coordinator</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">🔶 ESP32-C3 ×4</div>
+          <div class="node-sub">TinyML Workers</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">📊 Resultado</div>
+          <div class="node-sub">label + confianza</div>
+        </div>
+      </div>
+
+      <div class="alert info">
+        <strong>Objetivo:</strong> Detectar tono/intención de mensajes de texto con baja latencia, usando tokenización en PC y clasificación liviana en nodos ESP32.
+      </div>
+    </section>
+
+    <!-- ─── 01 ARQUITECTURA ─── -->
+    <section id="arquitectura" class="section">
+      <div class="section-header">
+        <div class="section-number">01 — Documentación</div>
+        <h2>Arquitectura del Sistema</h2>
+      </div>
+
+      <div class="arch-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon purple">🌐</div>
+            <div>
+              <div class="card-title">Web App (PC)</div>
+              <div class="card-subtitle">Frontend + Procesamiento</div>
+            </div>
+          </div>
+          <ul>
+            <li>Entrada de texto del usuario</li>
+            <li>Tokenización del mensaje</li>
+            <li>Preprocesamiento y empaquetado</li>
+            <li>Visualización de resultados</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon cyan">🔷</div>
+            <div>
+              <div class="card-title">ESP32-S3 (Coordinator)</div>
+              <div class="card-subtitle">Master I2C + Serial Bridge</div>
+            </div>
+          </div>
+          <ul>
+            <li>Conexión Serial con la Web</li>
+            <li>Enrutamiento de tareas a nodos C3</li>
+            <li>Agregación de resultados</li>
+            <li>Health checks de nodos</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon green">🔶</div>
+            <div>
+              <div class="card-title">4× ESP32-C3 (Workers)</div>
+              <div class="card-subtitle">Inferencia TinyML</div>
+            </div>
+          </div>
+          <ul>
+            <li>Inferencia TinyML (modelo int8)</li>
+            <li>Respuesta con clase + confianza + latencia</li>
+            <li>Operación autónoma por nodo</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Principios de Diseño</h3>
+      <ul>
+        <li>El texto crudo se procesa en PC — microcontroladores reciben solo tensores/features compactas.</li>
+        <li>El S3 desacopla frontend del clúster de workers.</li>
+        <li>Arquitectura no-bloqueante en todo el firmware.</li>
+      </ul>
+    </section>
+
+    <!-- ─── 02 PROTOCOLO SERIAL ─── -->
+    <section id="protocolo" class="section">
+      <div class="section-header">
+        <div class="section-number">02 — Documentación</div>
+        <h2>Protocolo Serial (Web ↔ S3)</h2>
+      </div>
+
+      <p>Formato recomendado: <strong>JSON Lines</strong> (<code>\n</code> por mensaje).</p>
+
+      <h3>Mensajes Web → S3</h3>
+      <pre><code>{
+  "type": "infer",
+  "req_id": "r-001",
+  "model": "tone-v1",
+  "tokens": [12, 45, 77],
+  "max_len": 64,
+  "route": "auto"
+}</code></pre>
+
+      <table>
+        <thead>
+          <tr><th>Campo</th><th>Descripción</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>req_id</code></td><td>ID único de solicitud</td></tr>
+          <tr><td><code>tokens</code></td><td>input_ids ya tokenizados/padded</td></tr>
+          <tr><td><code>max_len</code></td><td>Longitud fija de entrada</td></tr>
+          <tr><td><code>route</code></td><td><code>auto</code> | <code>node_id</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Mensajes S3 → Web</h3>
+      <h4>Resultado exitoso</h4>
+      <pre><code>{
+  "type": "result",
+  "req_id": "r-001",
+  "label": "neutral",
+  "confidence": 0.91,
+  "node": "c3-2",
+  "latency_ms": 38
+}</code></pre>
+
+      <h4>Error</h4>
+      <pre><code>{
+  "type": "error",
+  "req_id": "r-001",
+  "code": "NODE_TIMEOUT",
+  "message": "worker no respondió"
+}</code></pre>
+
+      <h3>Reglas</h3>
+      <ul>
+        <li>Timeout inferencia por nodo: <strong>300–800 ms</strong></li>
+        <li>Reintento: <strong>1</strong></li>
+        <li>Si falla nodo asignado: <strong>reroute automático</strong></li>
+      </ul>
+    </section>
+
+    <!-- ─── 03 MODELO ─── -->
+    <section id="modelo" class="section">
+      <div class="section-header">
+        <div class="section-number">03 — Documentación</div>
+        <h2>Estrategia de Modelo (Tono)</h2>
+      </div>
+
+      <h3>Etiquetas de clasificación</h3>
+      <div style="margin-bottom: 16px;">
+        <span class="tag green">neutral</span>
+        <span class="tag cyan">positivo</span>
+        <span class="tag amber">urgente</span>
+        <span class="tag red">molesto</span>
+        <span class="tag purple">formal</span>
+      </div>
+
+      <h3>Restricciones ESP32-C3</h3>
+      <ul>
+        <li>Priorizar modelos pequeños <strong>int8</strong></li>
+        <li>Input fijo (ej: 64 tokens)</li>
+        <li>Parámetros recomendados: <strong>10k a 120k</strong></li>
+      </ul>
+
+      <h3>Pipeline de Entrenamiento</h3>
+      <ol>
+        <li>Curar dataset etiquetado</li>
+        <li>Entrenar baseline en PC</li>
+        <li>Cuantizar a int8 (TFLite Micro compatible)</li>
+        <li>Validar exactitud vs latencia</li>
+        <li>Exportar artefacto por versión (<code>tone-v1</code>, <code>tone-v2</code>)</li>
+      </ol>
+
+      <h3>Métricas Mínimas</h3>
+      <table>
+        <thead>
+          <tr><th>Métrica</th><th>Objetivo</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Accuracy macro</td><td>≥ 80% (inicio)</td></tr>
+          <tr><td>Latencia por nodo</td><td>≤ 80 ms</td></tr>
+          <tr><td>Memoria</td><td>Estable sin resets</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ─── 04 FIRMWARE ─── -->
+    <section id="firmware" class="section">
+      <div class="section-header">
+        <div class="section-number">04 — Documentación</div>
+        <h2>Plan de Firmware</h2>
+      </div>
+
+      <div class="chip-compare">
+        <div class="chip-card">
+          <h4><span class="tag cyan">ESP32-S3</span> Coordinator</h4>
+          <div class="chip-spec"><span class="spec-label">Parser</span><span class="spec-value">JSONL serial</span></div>
+          <div class="chip-spec"><span class="spec-label">Cola</span><span class="spec-value">Request queue</span></div>
+          <div class="chip-spec"><span class="spec-label">Scheduler</span><span class="spec-value">Workers round-robin</span></div>
+          <div class="chip-spec"><span class="spec-label">Monitor</span><span class="spec-value">ping, last_seen, error_rate</span></div>
+          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Enrutamiento + errores</span></div>
+        </div>
+        <div class="chip-card">
+          <h4><span class="tag green">ESP32-C3</span> Worker</h4>
+          <div class="chip-spec"><span class="spec-label">Init</span><span class="spec-value">Modelo TinyML</span></div>
+          <div class="chip-spec"><span class="spec-label">Recibir</span><span class="spec-value">Features/tokens</span></div>
+          <div class="chip-spec"><span class="spec-label">Ejecutar</span><span class="spec-value">Inferencia int8</span></div>
+          <div class="chip-spec"><span class="spec-label">Responder</span><span class="spec-value">label/confidence/latency</span></div>
+          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Boot, infer ok/fail</span></div>
+        </div>
+      </div>
+
+      <h3>Versionado</h3>
+      <ul>
+        <li>API firmware: <code>fw_api_v1</code></li>
+        <li>Modelo: <code>tone-vX</code></li>
+      </ul>
+    </section>
+
+    <!-- ─── 05 WEB + TOKENIZACIÓN ─── -->
+    <section id="web-tokenizer" class="section">
+      <div class="section-header">
+        <div class="section-number">05 — Documentación</div>
+        <h2>Web + Tokenización</h2>
+      </div>
+
+      <h3>Stack Sugerido</h3>
+      <ul>
+        <li><strong>Frontend:</strong> React/Vite (o simple HTML+JS)</li>
+        <li><strong>Serial:</strong> Web Serial API</li>
+        <li><strong>Tokenización:</strong> Librería JS (según vocab del modelo)</li>
+      </ul>
+
+      <h3>Flujo UI</h3>
+      <div class="flow-diagram">
+        <div class="flow-node">
+          <div class="node-label">✍️ Input</div>
+          <div class="node-sub">Usuario escribe</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">🔤 Tokenizar</div>
+          <div class="node-sub">+ padding</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">📡 Serial</div>
+          <div class="node-sub">Enviar infer</div>
+        </div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">
+          <div class="node-label">📊 Resultado</div>
+          <div class="node-sub">confianza + nodo + ms</div>
+        </div>
+      </div>
+
+      <h3>Buenas Prácticas</h3>
+      <ul>
+        <li>Cachear vocab/tokenizer en browser</li>
+        <li>Validar longitud máxima de entrada</li>
+        <li>Botón de reconnect serial</li>
+      </ul>
+    </section>
+
+    <!-- ─── 06 ORQUESTACIÓN ─── -->
+    <section id="orquestacion" class="section">
+      <div class="section-header">
+        <div class="section-number">06 — Documentación</div>
+        <h2>Orquestación Multi-Nodo</h2>
+      </div>
+
+      <h3>Estrategia Inicial</h3>
+      <ul>
+        <li><code>route=auto</code> con round-robin entre 4 C3</li>
+        <li>Excluir nodos con timeout consecutivo</li>
+        <li>Reintegrar nodos tras N pings exitosos</li>
+      </ul>
+
+      <h3>Modo Resiliente</h3>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon amber">🛡️</div>
+          <div>
+            <div class="card-title">Circuit Breaker por Nodo</div>
+            <div class="card-subtitle">Resiliencia automática</div>
+          </div>
+        </div>
+        <ul>
+          <li>Retry una vez en nodo alternativo</li>
+          <li>Circuit breaker por nodo (abierto tras fallas consecutivas)</li>
+          <li>Recovery automático tras pings exitosos</li>
+        </ul>
+      </div>
+
+      <h3>Escalado</h3>
+      <ul>
+        <li>Soportar nuevos workers con registro dinámico</li>
+        <li>Tabla de capacidades por nodo (modelo soportado, versión)</li>
+      </ul>
+    </section>
+
+    <!-- ─── 07 ROADMAP ─── -->
+    <section id="roadmap" class="section">
+      <div class="section-header">
+        <div class="section-number">07 — Documentación</div>
+        <h2>Roadmap de Implementación</h2>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="roadmap-dot active"></div>
+        <h4>Fase 1 — MVP</h4>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Protocolo serial operativo</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> 1 C3 corriendo inferencia</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Web muestra resultados básicos</div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="roadmap-dot"></div>
+        <h4>Fase 2 — Multi-nodo</h4>
+        <div class="roadmap-item"><span class="checkbox">☐</span> 4 C3 en round-robin</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Métricas de latencia por nodo</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Manejo robusto de errores</div>
+      </div>
+
+      <div class="roadmap-phase">
+        <div class="roadmap-dot"></div>
+        <h4>Fase 3 — Producción</h4>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Mejora de modelo y dataset</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Panel de monitoreo</div>
+        <div class="roadmap-item"><span class="checkbox">☐</span> Pipeline de actualización de firmware/modelo</div>
+      </div>
+    </section>
+
+    <!-- ─── 08 GITHUB ─── -->
+    <section id="github" class="section">
+      <div class="section-header">
+        <div class="section-number">08 — Documentación</div>
+        <h2>GitHub para Trabajo Multi-PC</h2>
+      </div>
+
+      <h3>Setup Inicial</h3>
+      <pre><code>cd C:\CuantumWiki
+git init
+git add .
+git commit -m "init: arquitectura CuantumWiki"
+git branch -M main
+git remote add origin &lt;URL_DEL_REPO&gt;
+git push -u origin main</code></pre>
+
+      <h3>Flujo Diario</h3>
+      <pre><code>git pull --rebase
+git add .
+git commit -m "update: ..."
+git push</code></pre>
+
+      <h3>Convención de Ramas</h3>
+      <table>
+        <thead>
+          <tr><th>Rama</th><th>Propósito</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>main</code></td><td>Estable</td></tr>
+          <tr><td><code>dev</code></td><td>Integración</td></tr>
+          <tr><td><code>feat/*</code></td><td>Features puntuales</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════ REFERENTES ═══════════════ -->
+
+    <!-- ─── REF: masterV3 ─── -->
+    <section id="ref-master" class="section">
+      <div class="section-header">
+        <div class="section-number">Referente — ESP32-S3</div>
+        <h2>masterV3.ino — Coordinator</h2>
+      </div>
+
+      <div class="alert info">
+        <strong>977 líneas</strong> — Firmware master para ESP32-S3 con I2C, OLED, RTC, SD, BME280, NeoPixel y control serial bidireccional desde PC.
+      </div>
+
+      <h3>Resumen de Arquitectura</h3>
+      <table>
+        <thead>
+          <tr><th>Aspecto</th><th>Detalle</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Rol</td><td>Master I2C, coordinador de 4 slaves ESP32-C3</td></tr>
+          <tr><td>Periféricos</td><td>OLED SH1106, RTC DS3231, SD (HSPI), BME280, NeoPixel, 2 botones</td></tr>
+          <tr><td>I2C TX</td><td><code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;\n</code></td></tr>
+          <tr><td>I2C TX (params)</td><td><code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;\n</code></td></tr>
+          <tr><td>Serial PC</td><td><code>@HELLO</code>, <code>@SET</code>, <code>@PARAM</code>, <code>@GET</code>, <code>@STOP</code></td></tr>
+          <tr><td>Batch output</td><td><code>O,&lt;tick&gt;,&lt;slaveIdx&gt;,&lt;bmask&gt;,&lt;loss&gt;,&lt;noise&gt;,&lt;seed&gt;,&lt;fmt&gt;</code></td></tr>
+          <tr><td>Arquitectura</td><td>Non-blocking scheduler, flags de estado, retry automático</td></tr>
+          <tr><td>Logging</td><td>CSV en SD con timestamp, métricas, parámetros</td></tr>
+          <tr><td>Display</td><td>OLED con barra de reconstrucción, grid de slaves, historial gráfico</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Pines y Configuración Hardware</h3>
+      <table>
+        <thead>
+          <tr><th>Componente</th><th>Pines</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Botón A</td><td>GPIO 1</td></tr>
+          <tr><td>Botón B</td><td>GPIO 2</td></tr>
+          <tr><td>NeoPixel</td><td>GPIO 48</td></tr>
+          <tr><td>SD CS</td><td>GPIO 7</td></tr>
+          <tr><td>SD MOSI</td><td>GPIO 6</td></tr>
+          <tr><td>SD MISO</td><td>GPIO 4</td></tr>
+          <tr><td>SD SCLK</td><td>GPIO 5</td></tr>
+          <tr><td>I2C</td><td>Default (SDA/SCL)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Slaves I2C</h3>
+      <pre><code>static constexpr uint8_t SLAVE_ADDRESSES[] = { 0x10, 0x11, 0x12, 0x13 };
+static constexpr uint8_t NUM_SLAVES = 4;</code></pre>
+
+      <h3>Protocolo Serial (PC → Master)</h3>
+      <pre><code>// Handshake
+@HELLO
+→ @HELLO OK FW=MasterV3Full SLAVES=4
+
+// Set parámetros locales
+@SET N=0.20 M=1
+→ @ACK SET N=0.20 M=1
+
+// Broadcast parámetros a slaves
+@PARAM N=0.20 B=5 K=60 M=1
+→ @ACK PARAM N=0.20 B=5 K=60 M=1
+
+// Iniciar batch de mediciones
+@GET K=200 STRIDE=1 BURN=20
+→ @BATCH K=200 STRIDE=1 BURN=20 N=0.20 M=1 B=0 Kp=0
+→ O,&lt;tick&gt;,&lt;slaveIdx&gt;,&lt;bmask&gt;,&lt;loss&gt;,&lt;noise&gt;,&lt;seed&gt;,&lt;fmt&gt;  (×K)
+→ @DONE LASTTICK=200
+
+// Detener batch
+@STOP
+→ @ACK STOP</code></pre>
+
+      <h3>Modelo de Datos por Slave</h3>
+      <pre><code>struct SlaveObs {
+  uint32_t tick = 0;
+  uint16_t bmask = 0;
+  uint16_t loss = 0;
+  float noise = NAN;
+  uint8_t noiseByte = 0;
+  uint32_t seed = 0;
+  uint8_t fmt = 0;      // 0=invalid, 1=long, 2=compact
+  bool valid = false;
+  uint32_t lastRxMs = 0;
+};</code></pre>
+
+      <h3>Componentes Reutilizables para Detección de Tono</h3>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon green">✅</div>
+          <div>
+            <div class="card-title">Reutilizables directamente</div>
+          </div>
+        </div>
+        <ul>
+          <li>Non-blocking scheduler y timing</li>
+          <li>Init con flags + retry automático</li>
+          <li>OLED display framework</li>
+          <li>SD logging con timestamp</li>
+          <li>Health check y reporte serial</li>
+          <li>Debounce de botones</li>
+          <li>NeoPixel status LED</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon amber">🔄</div>
+          <div>
+            <div class="card-title">Requieren adaptación</div>
+          </div>
+        </div>
+        <ul>
+          <li>Protocolo serial PC: cambiar de <code>@</code> commands a <strong>JSONL</strong></li>
+          <li>Protocolo I2C: cambiar observables por tokens/features de entrada y label/confidence de respuesta</li>
+          <li><code>SlaveObs</code>: reemplazar por estructura de resultado de inferencia</li>
+          <li>Batch driver: adaptar para requests de inferencia</li>
+          <li>Bulk reconstruction: eliminar (específico de toy holography)</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── REF: quantumV3 ─── -->
+    <section id="ref-quantum" class="section">
+      <div class="section-header">
+        <div class="section-number">Referente — ESP32-C3</div>
+        <h2>quantumV3.ino — Boundary Node (Worker)</h2>
+      </div>
+
+      <div class="alert info">
+        <strong>333 líneas</strong> — Nodo worker I2C slave con simulación LFSR de estado cuántico. Base para los workers TinyML de detección de tono.
+      </div>
+
+      <h3>Resumen de Arquitectura</h3>
+      <table>
+        <thead>
+          <tr><th>Aspecto</th><th>Detalle</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Rol</td><td>I2C slave, worker de simulación</td></tr>
+          <tr><td>Address</td><td>Configurable: <code>0x10</code>, <code>0x11</code>, <code>0x12</code>, <code>0x13</code></td></tr>
+          <tr><td>I2C RX</td><td>Parsea <code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;</code> y <code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;</code></td></tr>
+          <tr><td>I2C TX</td><td>Formato compacto: <code>O,%08lX,%04X,%04X,%02X\n</code> (≤ 32 bytes)</td></tr>
+          <tr><td>LED</td><td>Pin 7, pulso visual por interacción I2C</td></tr>
+          <tr><td>Dinámica</td><td>LFSR-16 + xorshift32 PRNG</td></tr>
+          <tr><td>Scheduler</td><td>Non-blocking 20ms steps + health print 3s</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Configuración</h3>
+      <pre><code>#define SLAVE_ADDRESS 0x10  // CAMBIAR POR NODO: 0x10, 0x11, 0x12, 0x13
+
+static constexpr int LED_PIN = 7;
+static constexpr uint8_t I2C_MAX_RX = 32;
+static constexpr uint32_t WORK_STEP_PERIOD_MS = 20;
+static constexpr uint32_t HEALTH_PRINT_MS = 3000;
+static constexpr uint16_t LED_PULSE_MS = 30;</code></pre>
+
+      <h3>Callbacks I2C</h3>
+      <pre><code>// Recepción (desde Master)
+static void onReceiveEvent(int howMany) {
+  // Lee bytes en rxBuf, marca cmdPending = true
+}
+
+// Solicitud (Master pide datos)
+static void onRequestEvent() {
+  // Envía txBuf al master
+  Wire.write(txBuf, strnlen(txBuf, sizeof(txBuf)));
+}</code></pre>
+
+      <h3>Formato de Respuesta Compacta</h3>
+      <pre><code>// "O,%08lX,%04X,%04X,%02X\n" → 26 chars máximo
+// tickHex(32bit), bmask(16), loss(16), noiseByte(0..255)
+snprintf(txBuf, sizeof(txBuf),
+  "O,%08lX,%04X,%04X,%02X\n",
+  currentTick, bmask, lossCount, noiseByte);</code></pre>
+
+      <h3>Componentes Reutilizables para Detección de Tono</h3>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon green">✅</div>
+          <div>
+            <div class="card-title">Reutilizables directamente</div>
+          </div>
+        </div>
+        <ul>
+          <li>Esqueleto I2C slave con <code>onReceive</code> / <code>onRequest</code></li>
+          <li>Non-blocking loop con scheduler</li>
+          <li>LED pulse feedback</li>
+          <li>Health print periódico</li>
+          <li>Init con retry y flags</li>
+          <li>Buffer management (rxBuf/txBuf ≤ 32 bytes)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon amber">🔄</div>
+          <div>
+            <div class="card-title">Requieren adaptación</div>
+          </div>
+        </div>
+        <ul>
+          <li><code>updateBoundaryState()</code>: reemplazar LFSR/PRNG con <strong>inicialización de modelo TFLite Micro</strong></li>
+          <li><code>buildResponseCompact()</code>: reemplazar con <strong>resultado de inferencia</strong> (label, confidence, latency)</li>
+          <li>Parsers: adaptar para recibir <strong>tokens/features</strong> compactas en vez de tick/noise</li>
+          <li>El formato compacto de 32 bytes puede necesitar expandirse para el resultado de inferencia</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ─── REF: COMPARATIVA ─── -->
+    <section id="ref-comparativa" class="section">
+      <div class="section-header">
+        <div class="section-number">Referente — Análisis</div>
+        <h2>Comparativa: Referentes vs Plan CuantumWiki</h2>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Característica</th>
+            <th>masterV3 / quantumV3 (Actual)</th>
+            <th>CuantumWiki (Objetivo)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Protocolo PC↔S3</td>
+            <td>Comandos <code>@</code> custom (SET, GET, STOP)</td>
+            <td>JSONL (<code>infer</code>, <code>result</code>, <code>error</code>)</td>
+          </tr>
+          <tr>
+            <td>Protocolo S3↔C3</td>
+            <td>I2C texto: <code>T,tick,mode,noise</code></td>
+            <td>I2C binario/texto con tokens compactos</td>
+          </tr>
+          <tr>
+            <td>Tarea del worker</td>
+            <td>Simulación LFSR (boundary state)</td>
+            <td>Inferencia TinyML int8 (clasificación de tono)</td>
+          </tr>
+          <tr>
+            <td>Output del worker</td>
+            <td><code>O,tick,bmask,loss,noise</code></td>
+            <td><code>label, confidence, latency_ms</code></td>
+          </tr>
+          <tr>
+            <td>Scheduler</td>
+            <td>Non-blocking ✅</td>
+            <td>Non-blocking ✅ (reutilizable)</td>
+          </tr>
+          <tr>
+            <td>Health checks</td>
+            <td>Periódicos + serial report</td>
+            <td>Periódicos + <code>ping/last_seen/error_rate</code></td>
+          </tr>
+          <tr>
+            <td>Routing</td>
+            <td>Broadcast a todos</td>
+            <td>Round-robin / route=auto / node_id</td>
+          </tr>
+          <tr>
+            <td>Error handling</td>
+            <td>Parse fail → ignore</td>
+            <td>Retry + circuit breaker + reroute</td>
+          </tr>
+          <tr>
+            <td>Frontend</td>
+            <td>PC serial monitor</td>
+            <td>Web App con Web Serial API</td>
+          </tr>
+          <tr>
+            <td>Periféricos S3</td>
+            <td>OLED, RTC, SD, BME280, NeoPixel</td>
+            <td>Mismos (reutilizables)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert success">
+        <strong>Conclusión:</strong> La base de código de los referentes es sólida. El ~60% del código del master (scheduler, init, OLED, SD, health, botones) y el ~50% del worker (I2C skeleton, loop, LED, buffers) son reutilizables directamente. Las adaptaciones principales son: cambiar el protocolo a JSONL, reemplazar la simulación LFSR por TFLite Micro, y agregar lógica de routing inteligente.
+      </div>
+
+      <h3>Próximas Acciones</h3>
+      <ol>
+        <li>Definir etiquetas finales de tono (3–7 clases)</li>
+        <li>Definir tokenizer exacto y <code>max_len</code></li>
+        <li>Implementar protocolo serial JSONL en S3</li>
+        <li>Levantar primer worker C3 con modelo dummy</li>
+        <li>Integrar web con envío/recepción serial</li>
+        <li>Crear repo GitHub y subir este wiki</li>
+      </ol>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
