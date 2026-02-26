@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="CuantumWiki — Wiki técnica para detección de tono con arquitectura distribuida: Web, ESP32-S3 coordinador y 4x ESP32-C3 workers TinyML.">
+  <meta name="description"
+    content="CuantumWiki — Wiki técnica para detección de tono con arquitectura distribuida: Web, ESP32-S3 coordinador y 4x ESP32-C3 workers TinyML.">
   <title>CuantumWiki — Arquitectura Distribuida de Detección de Tono</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛</text></svg>">
 </head>
+
 <body>
 
   <!-- ═══════════════ HEADER ═══════════════ -->
@@ -139,7 +143,8 @@
       </div>
 
       <div class="alert info">
-        <strong>Objetivo:</strong> Detectar tono/intención de mensajes de texto con baja latencia, usando tokenización en PC y clasificación liviana en nodos ESP32.
+        <strong>Objetivo:</strong> Detectar tono/intención de mensajes de texto con baja latencia, usando tokenización
+        en PC y clasificación liviana en nodos ESP32.
       </div>
     </section>
 
@@ -192,7 +197,7 @@
             </div>
           </div>
           <ul>
-            <li>Inferencia TinyML (modelo int8)</li>
+            <li>Inferencia Neuronal Nativa (Math en C puro, sin TFLite)</li>
             <li>Respuesta con clase + confianza + latencia</li>
             <li>Operación autónoma por nodo</li>
           </ul>
@@ -228,13 +233,28 @@
 
       <table>
         <thead>
-          <tr><th>Campo</th><th>Descripción</th></tr>
+          <tr>
+            <th>Campo</th>
+            <th>Descripción</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td><code>req_id</code></td><td>ID único de solicitud</td></tr>
-          <tr><td><code>tokens</code></td><td>input_ids ya tokenizados/padded</td></tr>
-          <tr><td><code>max_len</code></td><td>Longitud fija de entrada</td></tr>
-          <tr><td><code>route</code></td><td><code>auto</code> | <code>node_id</code></td></tr>
+          <tr>
+            <td><code>req_id</code></td>
+            <td>ID único de solicitud</td>
+          </tr>
+          <tr>
+            <td><code>tokens</code></td>
+            <td>input_ids ya tokenizados/padded</td>
+          </tr>
+          <tr>
+            <td><code>max_len</code></td>
+            <td>Longitud fija de entrada</td>
+          </tr>
+          <tr>
+            <td><code>route</code></td>
+            <td><code>auto</code> | <code>node_id</code></td>
+          </tr>
         </tbody>
       </table>
 
@@ -283,29 +303,40 @@
 
       <h3>Restricciones ESP32-C3</h3>
       <ul>
-        <li>Priorizar modelos pequeños <strong>int8</strong></li>
-        <li>Input fijo (ej: 64 tokens)</li>
-        <li>Parámetros recomendados: <strong>10k a 120k</strong></li>
+        <li>Implementación matemática manual en C (sin dependencias ML externas)</li>
+        <li>Input fijo (64 tokens por inferencia)</li>
+        <li>Límite de Flash (~1.3MB en weights, 55% del espacio total)</li>
       </ul>
 
       <h3>Pipeline de Entrenamiento</h3>
       <ol>
-        <li>Curar dataset etiquetado</li>
-        <li>Entrenar baseline en PC</li>
-        <li>Cuantizar a int8 (TFLite Micro compatible)</li>
-        <li>Validar exactitud vs latencia</li>
-        <li>Exportar artefacto por versión (<code>tone-v1</code>, <code>tone-v2</code>)</li>
+        <li>Descarga de HuggingFace + limpieza Regex (URLs, @)</li>
+        <li>Tokenización basada en frecuencias (Vocab: 3500)</li>
+        <li>Entrenamiento de Embedding + Dense en PC (Keras)</li>
+        <li>Exportar pesos crudos (`float32`) a un Header en C (`.h`)</li>
       </ol>
 
       <h3>Métricas Mínimas</h3>
       <table>
         <thead>
-          <tr><th>Métrica</th><th>Objetivo</th></tr>
+          <tr>
+            <th>Métrica</th>
+            <th>Objetivo</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Accuracy macro</td><td>≥ 80% (inicio)</td></tr>
-          <tr><td>Latencia por nodo</td><td>≤ 80 ms</td></tr>
-          <tr><td>Memoria</td><td>Estable sin resets</td></tr>
+          <tr>
+            <td>Accuracy macro</td>
+            <td>≥ 80% (inicio)</td>
+          </tr>
+          <tr>
+            <td>Latencia por nodo</td>
+            <td>≤ 80 ms</td>
+          </tr>
+          <tr>
+            <td>Memoria</td>
+            <td>Estable sin resets</td>
+          </tr>
         </tbody>
       </table>
     </section>
@@ -320,19 +351,28 @@
       <div class="chip-compare">
         <div class="chip-card">
           <h4><span class="tag cyan">ESP32-S3</span> Coordinator</h4>
-          <div class="chip-spec"><span class="spec-label">Parser</span><span class="spec-value">JSONL serial</span></div>
+          <div class="chip-spec"><span class="spec-label">Parser</span><span class="spec-value">JSONL serial</span>
+          </div>
           <div class="chip-spec"><span class="spec-label">Cola</span><span class="spec-value">Request queue</span></div>
-          <div class="chip-spec"><span class="spec-label">Scheduler</span><span class="spec-value">Workers round-robin</span></div>
-          <div class="chip-spec"><span class="spec-label">Monitor</span><span class="spec-value">ping, last_seen, error_rate</span></div>
-          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Enrutamiento + errores</span></div>
+          <div class="chip-spec"><span class="spec-label">Scheduler</span><span class="spec-value">Workers
+              round-robin</span></div>
+          <div class="chip-spec"><span class="spec-label">Monitor</span><span class="spec-value">ping, last_seen,
+              error_rate</span></div>
+          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Enrutamiento +
+              errores</span></div>
         </div>
         <div class="chip-card">
           <h4><span class="tag green">ESP32-C3</span> Worker</h4>
-          <div class="chip-spec"><span class="spec-label">Init</span><span class="spec-value">Modelo TinyML</span></div>
-          <div class="chip-spec"><span class="spec-label">Recibir</span><span class="spec-value">Features/tokens</span></div>
-          <div class="chip-spec"><span class="spec-label">Ejecutar</span><span class="spec-value">Inferencia int8</span></div>
-          <div class="chip-spec"><span class="spec-label">Responder</span><span class="spec-value">label/confidence/latency</span></div>
-          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Boot, infer ok/fail</span></div>
+          <div class="chip-spec"><span class="spec-label">Init</span><span class="spec-value">Matriz flotante
+              auto-generada</span></div>
+          <div class="chip-spec"><span class="spec-label">Recibir</span><span class="spec-value">Tokens int16 (binario
+              I2C)</span></div>
+          <div class="chip-spec"><span class="spec-label">Ejecutar</span><span class="spec-value">Inferencia C-Math
+              pura</span></div>
+          <div class="chip-spec"><span class="spec-label">Responder</span><span
+              class="spec-value">label/confidence/latency</span></div>
+          <div class="chip-spec"><span class="spec-label">Logs</span><span class="spec-value">Boot, infer ok/fail</span>
+          </div>
         </div>
       </div>
 
@@ -449,11 +489,10 @@
       </div>
 
       <div class="roadmap-phase">
-        <div class="roadmap-dot"></div>
-        <h4>Fase 3 — Producción</h4>
-        <div class="roadmap-item"><span class="checkbox">☐</span> Mejora de modelo y dataset</div>
-        <div class="roadmap-item"><span class="checkbox">☐</span> Panel de monitoreo</div>
-        <div class="roadmap-item"><span class="checkbox">☐</span> Pipeline de actualización de firmware/modelo</div>
+        <div class="roadmap-dot active"></div>
+        <h4>Fase 3 — Producción Alerta</h4>
+        <div class="roadmap-item"><span class="checkbox">✅</span> Modelo ampliado 1.3MB sin sesgos de longitud</div>
+        <div class="roadmap-item"><span class="checkbox">✅</span> Panel de monitoreo Web responsivo</div>
       </div>
     </section>
 
@@ -482,12 +521,24 @@ git push</code></pre>
       <h3>Convención de Ramas</h3>
       <table>
         <thead>
-          <tr><th>Rama</th><th>Propósito</th></tr>
+          <tr>
+            <th>Rama</th>
+            <th>Propósito</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td><code>main</code></td><td>Estable</td></tr>
-          <tr><td><code>dev</code></td><td>Integración</td></tr>
-          <tr><td><code>feat/*</code></td><td>Features puntuales</td></tr>
+          <tr>
+            <td><code>main</code></td>
+            <td>Estable</td>
+          </tr>
+          <tr>
+            <td><code>dev</code></td>
+            <td>Integración</td>
+          </tr>
+          <tr>
+            <td><code>feat/*</code></td>
+            <td>Features puntuales</td>
+          </tr>
         </tbody>
       </table>
     </section>
@@ -502,41 +553,101 @@ git push</code></pre>
       </div>
 
       <div class="alert info">
-        <strong>977 líneas</strong> — Firmware master para ESP32-S3 con I2C, OLED, RTC, SD, BME280, NeoPixel y control serial bidireccional desde PC.
+        <strong>977 líneas</strong> — Firmware master para ESP32-S3 con I2C, OLED, RTC, SD, BME280, NeoPixel y control
+        serial bidireccional desde PC.
       </div>
 
       <h3>Resumen de Arquitectura</h3>
       <table>
         <thead>
-          <tr><th>Aspecto</th><th>Detalle</th></tr>
+          <tr>
+            <th>Aspecto</th>
+            <th>Detalle</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Rol</td><td>Master I2C, coordinador de 4 slaves ESP32-C3</td></tr>
-          <tr><td>Periféricos</td><td>OLED SH1106, RTC DS3231, SD (HSPI), BME280, NeoPixel, 2 botones</td></tr>
-          <tr><td>I2C TX</td><td><code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;\n</code></td></tr>
-          <tr><td>I2C TX (params)</td><td><code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;\n</code></td></tr>
-          <tr><td>Serial PC</td><td><code>@HELLO</code>, <code>@SET</code>, <code>@PARAM</code>, <code>@GET</code>, <code>@STOP</code></td></tr>
-          <tr><td>Batch output</td><td><code>O,&lt;tick&gt;,&lt;slaveIdx&gt;,&lt;bmask&gt;,&lt;loss&gt;,&lt;noise&gt;,&lt;seed&gt;,&lt;fmt&gt;</code></td></tr>
-          <tr><td>Arquitectura</td><td>Non-blocking scheduler, flags de estado, retry automático</td></tr>
-          <tr><td>Logging</td><td>CSV en SD con timestamp, métricas, parámetros</td></tr>
-          <tr><td>Display</td><td>OLED con barra de reconstrucción, grid de slaves, historial gráfico</td></tr>
+          <tr>
+            <td>Rol</td>
+            <td>Master I2C, coordinador de 4 slaves ESP32-C3</td>
+          </tr>
+          <tr>
+            <td>Periféricos</td>
+            <td>OLED SH1106, RTC DS3231, SD (HSPI), BME280, NeoPixel, 2 botones</td>
+          </tr>
+          <tr>
+            <td>I2C TX</td>
+            <td><code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;\n</code></td>
+          </tr>
+          <tr>
+            <td>I2C TX (params)</td>
+            <td><code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;\n</code></td>
+          </tr>
+          <tr>
+            <td>Serial PC</td>
+            <td><code>@HELLO</code>, <code>@SET</code>, <code>@PARAM</code>, <code>@GET</code>, <code>@STOP</code></td>
+          </tr>
+          <tr>
+            <td>Batch output</td>
+            <td>
+              <code>O,&lt;tick&gt;,&lt;slaveIdx&gt;,&lt;bmask&gt;,&lt;loss&gt;,&lt;noise&gt;,&lt;seed&gt;,&lt;fmt&gt;</code>
+            </td>
+          </tr>
+          <tr>
+            <td>Arquitectura</td>
+            <td>Non-blocking scheduler, flags de estado, retry automático</td>
+          </tr>
+          <tr>
+            <td>Logging</td>
+            <td>CSV en SD con timestamp, métricas, parámetros</td>
+          </tr>
+          <tr>
+            <td>Display</td>
+            <td>OLED con barra de reconstrucción, grid de slaves, historial gráfico</td>
+          </tr>
         </tbody>
       </table>
 
       <h3>Pines y Configuración Hardware</h3>
       <table>
         <thead>
-          <tr><th>Componente</th><th>Pines</th></tr>
+          <tr>
+            <th>Componente</th>
+            <th>Pines</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Botón A</td><td>GPIO 1</td></tr>
-          <tr><td>Botón B</td><td>GPIO 2</td></tr>
-          <tr><td>NeoPixel</td><td>GPIO 48</td></tr>
-          <tr><td>SD CS</td><td>GPIO 7</td></tr>
-          <tr><td>SD MOSI</td><td>GPIO 6</td></tr>
-          <tr><td>SD MISO</td><td>GPIO 4</td></tr>
-          <tr><td>SD SCLK</td><td>GPIO 5</td></tr>
-          <tr><td>I2C</td><td>Default (SDA/SCL)</td></tr>
+          <tr>
+            <td>Botón A</td>
+            <td>GPIO 1</td>
+          </tr>
+          <tr>
+            <td>Botón B</td>
+            <td>GPIO 2</td>
+          </tr>
+          <tr>
+            <td>NeoPixel</td>
+            <td>GPIO 48</td>
+          </tr>
+          <tr>
+            <td>SD CS</td>
+            <td>GPIO 7</td>
+          </tr>
+          <tr>
+            <td>SD MOSI</td>
+            <td>GPIO 6</td>
+          </tr>
+          <tr>
+            <td>SD MISO</td>
+            <td>GPIO 4</td>
+          </tr>
+          <tr>
+            <td>SD SCLK</td>
+            <td>GPIO 5</td>
+          </tr>
+          <tr>
+            <td>I2C</td>
+            <td>Default (SDA/SCL)</td>
+          </tr>
         </tbody>
       </table>
 
@@ -623,22 +734,48 @@ static constexpr uint8_t NUM_SLAVES = 4;</code></pre>
       </div>
 
       <div class="alert info">
-        <strong>333 líneas</strong> — Nodo worker I2C slave con simulación LFSR de estado cuántico. Base para los workers TinyML de detección de tono.
+        <strong>333 líneas</strong> — Nodo worker I2C slave con simulación LFSR de estado cuántico. Base para los
+        workers TinyML de detección de tono.
       </div>
 
       <h3>Resumen de Arquitectura</h3>
       <table>
         <thead>
-          <tr><th>Aspecto</th><th>Detalle</th></tr>
+          <tr>
+            <th>Aspecto</th>
+            <th>Detalle</th>
+          </tr>
         </thead>
         <tbody>
-          <tr><td>Rol</td><td>I2C slave, worker de simulación</td></tr>
-          <tr><td>Address</td><td>Configurable: <code>0x10</code>, <code>0x11</code>, <code>0x12</code>, <code>0x13</code></td></tr>
-          <tr><td>I2C RX</td><td>Parsea <code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;</code> y <code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;</code></td></tr>
-          <tr><td>I2C TX</td><td>Formato compacto: <code>O,%08lX,%04X,%04X,%02X\n</code> (≤ 32 bytes)</td></tr>
-          <tr><td>LED</td><td>Pin 7, pulso visual por interacción I2C</td></tr>
-          <tr><td>Dinámica</td><td>LFSR-16 + xorshift32 PRNG</td></tr>
-          <tr><td>Scheduler</td><td>Non-blocking 20ms steps + health print 3s</td></tr>
+          <tr>
+            <td>Rol</td>
+            <td>I2C slave, worker de simulación</td>
+          </tr>
+          <tr>
+            <td>Address</td>
+            <td>Configurable: <code>0x10</code>, <code>0x11</code>, <code>0x12</code>, <code>0x13</code></td>
+          </tr>
+          <tr>
+            <td>I2C RX</td>
+            <td>Parsea <code>T,&lt;tick&gt;,&lt;mode&gt;,&lt;noise&gt;</code> y
+              <code>P,&lt;noise&gt;,&lt;bias&gt;,&lt;kp&gt;,&lt;mode&gt;</code></td>
+          </tr>
+          <tr>
+            <td>I2C TX</td>
+            <td>Formato compacto: <code>O,%08lX,%04X,%04X,%02X\n</code> (≤ 32 bytes)</td>
+          </tr>
+          <tr>
+            <td>LED</td>
+            <td>Pin 7, pulso visual por interacción I2C</td>
+          </tr>
+          <tr>
+            <td>Dinámica</td>
+            <td>LFSR-16 + xorshift32 PRNG</td>
+          </tr>
+          <tr>
+            <td>Scheduler</td>
+            <td>Non-blocking 20ms steps + health print 3s</td>
+          </tr>
         </tbody>
       </table>
 
@@ -695,8 +832,10 @@ snprintf(txBuf, sizeof(txBuf),
           </div>
         </div>
         <ul>
-          <li><code>updateBoundaryState()</code>: reemplazar LFSR/PRNG con <strong>inicialización de modelo TFLite Micro</strong></li>
-          <li><code>buildResponseCompact()</code>: reemplazar con <strong>resultado de inferencia</strong> (label, confidence, latency)</li>
+          <li><code>updateBoundaryState()</code>: reemplazar LFSR/PRNG con <strong>inferencia matemática en C
+              puro</strong> (sin TFLite)</li>
+          <li><code>buildResponseCompact()</code>: reemplazar con <strong>resultado textual/CSV</strong> (label,
+            confidence, latency)</li>
           <li>Parsers: adaptar para recibir <strong>tokens/features</strong> compactas en vez de tick/noise</li>
           <li>El formato compacto de 32 bytes puede necesitar expandirse para el resultado de inferencia</li>
         </ul>
@@ -732,7 +871,7 @@ snprintf(txBuf, sizeof(txBuf),
           <tr>
             <td>Tarea del worker</td>
             <td>Simulación LFSR (boundary state)</td>
-            <td>Inferencia TinyML int8 (clasificación de tono)</td>
+            <td>Inferencia neuronal C-Math Float32</td>
           </tr>
           <tr>
             <td>Output del worker</td>
@@ -773,7 +912,10 @@ snprintf(txBuf, sizeof(txBuf),
       </table>
 
       <div class="alert success">
-        <strong>Conclusión:</strong> La base de código de los referentes es sólida. El ~60% del código del master (scheduler, init, OLED, SD, health, botones) y el ~50% del worker (I2C skeleton, loop, LED, buffers) son reutilizables directamente. Las adaptaciones principales son: cambiar el protocolo a JSONL, reemplazar la simulación LFSR por TFLite Micro, y agregar lógica de routing inteligente.
+        <strong>Conclusión:</strong> La base de código de los referentes es sólida. El ~60% del código del master
+        (scheduler, init, OLED, SD, health, botones) y el ~50% del worker (I2C skeleton, loop, LED, buffers) son
+        reutilizables directamente. Las adaptaciones principales son: cambiar el protocolo a JSONL, reemplazar la
+        simulación LFSR por TFLite Micro, y agregar lógica de routing inteligente.
       </div>
 
       <h3>Próximas Acciones</h3>
@@ -791,4 +933,5 @@ snprintf(txBuf, sizeof(txBuf),
 
   <script src="script.js"></script>
 </body>
+
 </html>
