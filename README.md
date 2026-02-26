@@ -10,7 +10,7 @@ El proyecto tiene tres componentes principales que funcionan en cadena:
 
 1. **Frontend Web (Tokenizador UI)**
    - Extrae el vocabulario, tokeniza el texto en el navegador y se comunica con el hardware vía **Web Serial API** usando JSONL.
-   - Hosted directamente en [GitHub Pages](./docs/index.html).
+   - Hosted directamente en [GitHub Pages](./docs/index.html). La wiki técnica está en [wiki.html](./docs/wiki.html).
 
 2. **Coordinador Master (ESP32-S3)**
    - Actúa como puente entre la Web (Serial) y los nodos esclavos (I2C).
@@ -28,13 +28,13 @@ El proyecto tiene tres componentes principales que funcionan en cadena:
 ## 🛠️ Instrucciones de Instalación y Uso
 
 ### 1. Despliegue de la Web UI
-La web es 100% estática (HTML/CSS/JS). Para usarla, simplemente abre `docs/app.html` en un navegador compatible con **Web Serial API** (Chrome, Edge, Opera).
+La web es 100% estática (HTML/CSS/JS). Para usarla, simplemente abre `docs/index.html` en un navegador compatible con **Web Serial API** (Chrome, Edge, Opera).
 Para pruebas locales tipo servidor, puedes ejecutar:
 ```bash
 cd docs
 python -m http.server 8080
 ```
-Y abrir `http://localhost:8080/app.html`.
+Y abrir `http://localhost:8080/`.
 
 ### 2. Flasheo del Firmware
 El proyecto usa el framework Arduino. Necesitarás instalar las placas ESP32 en el Board Manager.
